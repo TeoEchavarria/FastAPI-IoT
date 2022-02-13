@@ -385,8 +385,31 @@ def create_a_thing(thing : Thing = Body(...)):
     summary="Show all things",
     tags=["Things"]
 )
-def show_a_thing():
-    pass
+def show_all_thing():
+    """
+    This path operation shows all users in the app
+
+    Parameters:
+    -
+
+    Returns a json list with all users in the app, with the following keys:
+    - user_id: UUID
+    - email: Emailstr
+    - first_name: str
+    - last_name: str
+    - birth_date: datetime
+    """
+    cur.execute(
+        "SELECT * FROM project_iot.things;"
+    )
+    reply = [{ "thing_id":list(i)[0], 
+        "name_id": list(i)[1], 
+        "model": list(i)[2], 
+        "last_update": str(list(i)[3]), 
+        "status": list(i)[4], 
+        "message" : list(i)[5]} for i in cur.fetchall()]
+    myConexion.commit()
+    return reply
 
 ## Show a Thing by his Modification Dates
 @app.get(
