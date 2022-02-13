@@ -2,7 +2,7 @@
 from queue import Empty
 import pymysql
 from uuid import UUID
-from datetime import date
+from datetime import datetime
 from typing import List, Optional
 
 # Pydantic
@@ -296,7 +296,55 @@ def update_a_user(user_update : UserRegister = Body(...)):
 
 ## Things
 
-### Post a tweet
+## Show a thing by his ID
+@app.get(
+    path="/thing/{thing_id}",
+    response_model=ThingReply,
+    status_code=status.HTTP_200_OK,
+    summary="show a Thing by ID",
+    tags=["Things"]
+)
+def show_a_thing_id(thing_id : UUID = Path(
+        None,
+        title = "Thing ID",
+        example = "3fa85f64-5717-4562-b3fc-2c966f66afa6"
+    )):
+    """
+    Show a Thing by his id
+
+    This path operation Show a Thing in the app.
+
+    Parameters:
+    - Request path parameter
+        - thing_id: UUID
+
+    Returns a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    cur.execute(
+        f"SELECT * FROM project_iot.things WHERE thing_id =  '{str(thing_id)}';"
+    )
+    i = cur.fetchall()
+    if i is ():
+        myConexion.commit()
+        return None
+    else:
+        i = i[0]
+        reply = { "thing_id":list(i)[0], 
+        "name_id": list(i)[1], 
+        "model": list(i)[2], 
+        "last_update": str(list(i)[3]), 
+        "status": list(i)[4], 
+        "message" : list(i)[5]}
+        myConexion.commit()
+        return reply
+
+### Post a thing
 @app.post(
     path="/thing/create",
     response_model=ThingReply,
@@ -304,8 +352,30 @@ def update_a_user(user_update : UserRegister = Body(...)):
     summary="Created a thing",
     tags=["Things"]
 )
-def create_a_thing():
-    pass
+def create_a_thing(thing : Thing = Body(...)):
+    """
+    Create a Thing
+
+    This path operations register a user in the app
+
+    Parameters:
+    - Request body parameter
+        - thing: Thing
+
+    Return a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    thing_dict = thing.dict()
+    cur.execute(
+        "INSERT INTO things VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),"shutdown",'Successful Creation!!!', "No data yet to analyze"))
+    myConexion.commit()
+    return show_a_thing_id(thing_dict["thing_id"])
 
 ### Show all thigns
 @app.get(
@@ -318,12 +388,12 @@ def create_a_thing():
 def show_a_thing():
     pass
 
-## Show a user by his Modification Dates
+## Show a Thing by his Modification Dates
 @app.get(
     path="/things/{date_modification}/search",
     response_model=List[ThingReply],
     status_code=status.HTTP_200_OK,
-    summary="Show a user by his Modification Dates",
+    summary="Show a Thing by his Modification Dates",
     tags=["Things"]
 )
 def show_a_thing_date():

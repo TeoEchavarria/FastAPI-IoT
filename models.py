@@ -67,20 +67,19 @@ class UserRegister(User):
     type_user : TypeUser = Field(default = "absent")
 
 class Thing(BaseModel):
-    id : UUID = Field(...)
-
-class ThingReply(BaseModel):
+    thing_id : UUID = Field(...)
     name_id : str = Field(
         ...,
         min_length=8,
         max_length=64
     )
     model   : float = Field(...)
+
+class ThingReply(Thing):
     last_update : datetime = Field(...)
     status: Status = Field(default = "shutdown")
-    message: str = Field(default= f'Execution Successfully! \n Analyzing...')
-    analysis : str = Field(default= 'Data Processing Successful!')
+    message: str = Field(default= 'Successful Creation!!!')
 
-class Analysis(BaseModel):
+class Analysis(Thing):
     tables_analyzed : List[str] = Field(...)
     message : str = Field(default ="Analysis Successful ")
