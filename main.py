@@ -446,6 +446,7 @@ def show_a_thing_date(date_search : str = Query(..., example = "2022-02-13")):
         reply = [show_a_thing_id(j[0]) for j in set]
         myConexion.commit()
         return reply
+
 ### Analysis
 @app.get(
     path = "/things/analysis/{thing_id}",
@@ -455,17 +456,6 @@ def show_a_thing_date(date_search : str = Query(..., example = "2022-02-13")):
     tags=["Things"]
 )
 def analysis():
-    pass
-
-### Delete a thing
-@app.delete(
-    path="/things/{thing_id}/delete",
-    response_model=LoginOut,
-    status_code=status.HTTP_200_OK,
-    summary="Delete a thing",
-    tags=["Things"]
-)
-def delete_a_tweet():
     pass
 
 ### Update a thing
@@ -478,3 +468,41 @@ def delete_a_tweet():
 )
 def update_a_tweet():
     pass
+
+### Delete a thing
+@app.delete(
+    path="/things/{thing_id}/delete",
+    response_model=ThingReply,
+    status_code=status.HTTP_200_OK,
+    summary="Delete a thing",
+    tags=["Things"]
+)
+def delete_a_thing(thing_id : UUID = Path(
+        None,
+        title = "Thing ID",
+        example = "3fa85f64-5717-4562-b3fc-2c966f66afa6"
+    )):
+    """
+    Delete a thing
+
+    This path operation delete a thing in the app
+
+    Parameters:
+        - thing_id: UUID
+
+    Returns a json with deleted thing data:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    answerd = show_a_thing_id(thing_id)
+    cur.execute(
+    f"DELETE FROM `project_iot`.`things` WHERE (`thing_id` = '{str(thing_id)}');"
+    )
+    myConexion.commit()
+    return answerd
+
+
