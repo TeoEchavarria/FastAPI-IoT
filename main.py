@@ -2,7 +2,7 @@
 from queue import Empty
 import pymysql
 from uuid import UUID
-from datetime import date
+from datetime import datetime
 from typing import List, Optional
 
 # Pydantic
@@ -284,6 +284,18 @@ def delete_a_user(user_id : UUID = Path(...)):
     tags=["Users"]
 )
 def update_a_user(user_update : UserRegister = Body(...)):
+    """
+    Update User
+
+    This path operation update a user information in the app and save in the database
+
+    Parameters:
+    - user_id: UUID
+    - Request body parameter:
+        - **user: User** -> A user model with user_id, email, first name, last name, birth date and password
+    
+    Returns a user model with user_id, email, first_name, last_name and birth_date
+    """
     user_dict = user_update.dict()
     base_reply = show_a_user_id(user_dict['user_id'])
     base = [ base_reply[key] if value == "" else value for (key,value) in user_dict.items() ]
@@ -296,7 +308,57 @@ def update_a_user(user_update : UserRegister = Body(...)):
 
 ## Things
 
-### Post a tweet
+## Show a thing by his ID
+@app.get(
+    path="/thing/{thing_id}",
+    response_model=ThingReply,
+    status_code=status.HTTP_200_OK,
+    summary="show a Thing by ID",
+    tags=["Things"]
+)
+def show_a_thing_id(thing_id : UUID = Path(
+        None,
+        title = "Thing ID",
+        example = "3fa85f64-5717-4562-b3fc-2c966f66afa6"
+    )):
+    """
+    Show a Thing by his id
+
+    This path operation Show a Thing in the app.
+
+    Parameters:
+    - Request path parameter
+        - thing_id: UUID
+
+    Returns a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    - modification_dates :str
+    """
+    cur.execute(
+        f"SELECT * FROM project_iot.things WHERE thing_id =  '{str(thing_id)}';"
+    )
+    i = cur.fetchall()
+    if i is ():
+        myConexion.commit()
+        return None
+    else:
+        i = i[0]
+        reply = { "thing_id":list(i)[0], 
+        "name_id": list(i)[1], 
+        "model": list(i)[2], 
+        "last_update": str(list(i)[3]), 
+        "status": list(i)[4], 
+        "message" : list(i)[5],
+        "modification_dates" : list(i)[7]}
+        myConexion.commit()
+        return reply
+
+### Post a thing
 @app.post(
     path="/thing/create",
     response_model=ThingReply,
@@ -304,8 +366,30 @@ def update_a_user(user_update : UserRegister = Body(...)):
     summary="Created a thing",
     tags=["Things"]
 )
-def create_a_thing():
-    pass
+def create_a_thing(thing : Thing = Body(...)):
+    """
+    Create a Thing
+
+    This path operations register a user in the app
+
+    Parameters:
+    - Request body parameter
+        - thing: Thing
+
+    Return a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    thing_dict = thing.dict()
+    cur.execute(
+        "INSERT INTO things VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),thing_dict["status"],'Successful Creation!!!', "No data yet to analyze", datetime.today()))
+    myConexion.commit()
+    return show_a_thing_id(thing_dict["thing_id"])
 
 ### Show all thigns
 @app.get(
@@ -315,19 +399,62 @@ def create_a_thing():
     summary="Show all things",
     tags=["Things"]
 )
-def show_a_thing():
-    pass
+def show_all_thing():
+    """
+    This path operation shows all things in the app
 
-## Show a user by his Modification Dates
+    Returns a json list with all things in the app:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    cur.execute(
+        "SELECT * FROM project_iot.things;"
+    )
+    reply = [show_a_thing_id(list(i)[0])for i in cur.fetchall()]
+    myConexion.commit()
+    return reply
+
+## Show a Thing by his Modification Dates
 @app.get(
     path="/things/{date_modification}/search",
     response_model=List[ThingReply],
     status_code=status.HTTP_200_OK,
-    summary="Show a user by his Modification Dates",
+    summary="Show a Thing by his Modification Dates",
     tags=["Things"]
 )
-def show_a_thing_date():
-    pass
+def show_a_thing_date(date_search : str = Query(..., example = "2022-02-13")):
+    """
+    Show a Thing by his Modification Dates
+
+    This path operation Show a Thing in the app.
+
+    Parameters:
+    - Request path parameter
+        - data_search: str
+
+    Returns a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    cur.execute(
+        f"SELECT * FROM project_iot.things WHERE modification_dates like '%{date_search}%';"
+    )
+    set = cur.fetchall()
+    if set is ():
+        myConexion.commit()
+        return None
+    else:
+        reply = [show_a_thing_id(j[0]) for j in set]
+        myConexion.commit()
+        return reply
 
 ### Analysis
 @app.get(
@@ -340,24 +467,75 @@ def show_a_thing_date():
 def analysis():
     pass
 
-### Delete a thing
-@app.delete(
-    path="/things/{thing_id}/delete",
-    response_model=LoginOut,
-    status_code=status.HTTP_200_OK,
-    summary="Delete a thing",
-    tags=["Things"]
-)
-def delete_a_tweet():
-    pass
-
 ### Update a thing
 @app.put(
     path="/things/{thing_id}/update",
-    response_model=ThingReply,
+    #response_model=ThingReply,
     status_code=status.HTTP_200_OK,
     summary="Update a thing",
     tags=["Things"]
 )
-def update_a_tweet():
-    pass
+def update_a_tweet(thing_update : Thing = Body(...)):
+    """
+    Update Thing
+
+    This path operation update a Thing information in the app and save in the database
+
+    Parameters:
+    - thing_id: UUID
+    
+    Returns a json with deleted thing data:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    thing_dict = thing_update.dict()
+    base_reply = show_a_thing_id(thing_dict['thing_id'])
+    base = [ base_reply[key] if value == "" else value for (key,value) in thing_dict.items() ]
+    base_reply = [value for value in base_reply.values() ]
+    cur.execute(
+        f"UPDATE `project_iot`.`things` SET `name_id` = '{base[1]}', `model` = '{base[2]}', `last_update` = '{datetime.today()}', `status` = '{base[3]}', `message` = 'Update Successfully' WHERE (`thing_id` = '{str(base[0])}');"
+    )
+    myConexion.commit()
+    return show_a_thing_id(base[0])
+
+### Delete a thing
+@app.delete(
+    path="/things/{thing_id}/delete",
+    response_model=ThingReply,
+    status_code=status.HTTP_200_OK,
+    summary="Delete a thing",
+    tags=["Things"]
+)
+def delete_a_thing(thing_id : UUID = Path(
+        None,
+        title = "Thing ID",
+        example = "3fa85f64-5717-4562-b3fc-2c966f66afa6"
+    )):
+    """
+    Delete a thing
+
+    This path operation delete a thing in the app
+
+    Parameters:
+        - thing_id: UUID
+
+    Returns a json with deleted thing data:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    answerd = show_a_thing_id(thing_id)
+    cur.execute(
+    f"DELETE FROM `project_iot`.`things` WHERE (`thing_id` = '{str(thing_id)}');"
+    )
+    myConexion.commit()
+    return answerd
+
+
