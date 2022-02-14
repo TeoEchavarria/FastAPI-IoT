@@ -372,8 +372,8 @@ def create_a_thing(thing : Thing = Body(...)):
     """
     thing_dict = thing.dict()
     cur.execute(
-        "INSERT INTO things VALUES (%s, %s, %s, %s, %s, %s, %s)",
-        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),"shutdown",'Successful Creation!!!', "No data yet to analyze"))
+        "INSERT INTO things VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),"shutdown",'Successful Creation!!!', "No data yet to analyze", datetime.today()))
     myConexion.commit()
     return show_a_thing_id(thing_dict["thing_id"])
 
@@ -387,17 +387,15 @@ def create_a_thing(thing : Thing = Body(...)):
 )
 def show_all_thing():
     """
-    This path operation shows all users in the app
+    This path operation shows all things in the app
 
-    Parameters:
-    -
-
-    Returns a json list with all users in the app, with the following keys:
-    - user_id: UUID
-    - email: Emailstr
-    - first_name: str
-    - last_name: str
-    - birth_date: datetime
+    Returns a json list with all things in the app:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
     """
     cur.execute(
         "SELECT * FROM project_iot.things;"
@@ -419,9 +417,35 @@ def show_all_thing():
     summary="Show a Thing by his Modification Dates",
     tags=["Things"]
 )
-def show_a_thing_date():
-    pass
+def show_a_thing_date(date_search : str = Query(..., example = "2022-02-13")):
+    """
+    Show a Thing by his Modification Dates
 
+    This path operation Show a Thing in the app.
+
+    Parameters:
+    - Request path parameter
+        - data_search: str
+
+    Returns a json with the basic user information:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    cur.execute(
+        f"SELECT * FROM project_iot.things WHERE modification_dates like '%{date_search}%';"
+    )
+    set = cur.fetchall()
+    if set is ():
+        myConexion.commit()
+        return None
+    else:
+        reply = [show_a_thing_id(j[0]) for j in set]
+        myConexion.commit()
+        return reply
 ### Analysis
 @app.get(
     path = "/things/analysis/{thing_id}",
