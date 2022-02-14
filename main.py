@@ -284,6 +284,18 @@ def delete_a_user(user_id : UUID = Path(...)):
     tags=["Users"]
 )
 def update_a_user(user_update : UserRegister = Body(...)):
+    """
+    Update User
+
+    This path operation update a user information in the app and save in the database
+
+    Parameters:
+    - user_id: UUID
+    - Request body parameter:
+        - **user: User** -> A user model with user_id, email, first name, last name, birth date and password
+    
+    Returns a user model with user_id, email, first_name, last_name and birth_date
+    """
     user_dict = user_update.dict()
     base_reply = show_a_user_id(user_dict['user_id'])
     base = [ base_reply[key] if value == "" else value for (key,value) in user_dict.items() ]
@@ -325,6 +337,7 @@ def show_a_thing_id(thing_id : UUID = Path(
     - last_update: datetime
     - status: Status
     - message : str
+    - modification_dates :str
     """
     cur.execute(
         f"SELECT * FROM project_iot.things WHERE thing_id =  '{str(thing_id)}';"
@@ -340,7 +353,8 @@ def show_a_thing_id(thing_id : UUID = Path(
         "model": list(i)[2], 
         "last_update": str(list(i)[3]), 
         "status": list(i)[4], 
-        "message" : list(i)[5]}
+        "message" : list(i)[5],
+        "modification_dates" : list(i)[7]}
         myConexion.commit()
         return reply
 
@@ -373,7 +387,7 @@ def create_a_thing(thing : Thing = Body(...)):
     thing_dict = thing.dict()
     cur.execute(
         "INSERT INTO things VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),"shutdown",'Successful Creation!!!', "No data yet to analyze", datetime.today()))
+        (str(thing_dict["thing_id"]),thing_dict["name_id"],thing_dict["model"],datetime.today(),thing_dict["status"],'Successful Creation!!!', "No data yet to analyze", datetime.today()))
     myConexion.commit()
     return show_a_thing_id(thing_dict["thing_id"])
 
@@ -400,12 +414,7 @@ def show_all_thing():
     cur.execute(
         "SELECT * FROM project_iot.things;"
     )
-    reply = [{ "thing_id":list(i)[0], 
-        "name_id": list(i)[1], 
-        "model": list(i)[2], 
-        "last_update": str(list(i)[3]), 
-        "status": list(i)[4], 
-        "message" : list(i)[5]} for i in cur.fetchall()]
+    reply = [show_a_thing_id(list(i)[0])for i in cur.fetchall()]
     myConexion.commit()
     return reply
 
@@ -461,13 +470,37 @@ def analysis():
 ### Update a thing
 @app.put(
     path="/things/{thing_id}/update",
-    response_model=ThingReply,
+    #response_model=ThingReply,
     status_code=status.HTTP_200_OK,
     summary="Update a thing",
     tags=["Things"]
 )
-def update_a_tweet():
-    pass
+def update_a_tweet(thing_update : Thing = Body(...)):
+    """
+    Update Thing
+
+    This path operation update a Thing information in the app and save in the database
+
+    Parameters:
+    - thing_id: UUID
+    
+    Returns a json with deleted thing data:
+    - thing_id: UUID
+    - name_id: str
+    - model: float
+    - last_update: datetime
+    - status: Status
+    - message : str
+    """
+    thing_dict = thing_update.dict()
+    base_reply = show_a_thing_id(thing_dict['thing_id'])
+    base = [ base_reply[key] if value == "" else value for (key,value) in thing_dict.items() ]
+    base_reply = [value for value in base_reply.values() ]
+    cur.execute(
+        f"UPDATE `project_iot`.`things` SET `name_id` = '{base[1]}', `model` = '{base[2]}', `last_update` = '{datetime.today()}', `status` = '{base[3]}', `message` = 'Update Successfully' WHERE (`thing_id` = '{str(base[0])}');"
+    )
+    myConexion.commit()
+    return show_a_thing_id(base[0])
 
 ### Delete a thing
 @app.delete(

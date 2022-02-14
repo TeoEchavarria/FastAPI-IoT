@@ -74,11 +74,12 @@ class Thing(BaseModel):
         max_length=64
     )
     model   : float = Field(...)
+    status: str = Field(default = "shutdown", max_length=16)
 
 class ThingReply(Thing):
     last_update : datetime = Field(...)
-    status: Status = Field(default = "shutdown")
     message: str = Field(default= 'Successful Creation!!!')
+    modification_dates :str = Field(...)
 
 class Analysis(Thing):
     tables_analyzed : List[str] = Field(...)
