@@ -22,6 +22,7 @@ class TypeUser(Enum):
 class Status(Enum):
     shutdown = "shutdown"
     processing = "processing"
+    collecting_data = "collecting_data"
     analyzing = "analyzing"
     running = "running"
 
