@@ -4,16 +4,15 @@
 - CRUD of things.
 - API with MySQL connection.
 - Visualization, monitoring and control of processes. *(Coming soon)*
-- Connection to MathLab and R, for results analysis and evaluation. *(Coming soon)*
 
 ## MySQL - Database structure
 <p align="center"> <img src="https://user-images.githubusercontent.com/63327224/154146336-1e270c8b-ad39-4efc-9d98-754f3d6c7e64.jpg" width="350"> <img src="https://user-images.githubusercontent.com/63327224/154146638-07736fbb-5339-40c8-baa7-5d9fdc80ee1a.jpg" width="350"> </p>
 
 ### Clarifications
-Los valores presentes en la tabla de *Things,* **modification_dates = SET[datatime]**, es un conjunto de todas las fechas en las que se ha usado la **Thing.**
+The values present in the *Things table,* ** **modification_dates = SET[datatime]**, is a set of all the dates on which the **Thing** has been used.
 
-Los valores presentes en la tabla de *Users,* **things = SET[thing_id]**, es un conjunto de todos los UUID que hacen referencia a las **Things** que un usuario tiene a disposición.
+The values present in the *Users table,* ** **things = SET[thing_id]**, is a set of all UUIDs that reference the **Things** that a user has available.
 
 ## In development
-Se creara una base de datos adicional donde se guardara el conjunto de datos que una determinada **Thing** haya recolectado, posteriormente se analiza y dicho análisis también se guarda con el fin de comparar, y tener un seguimiento.
-El análisis se hará por medio de MATLAB y/o de R, utilizando métodos como lo son el de Máxima Verosimilitud para el análisis de probabilidades en procesos estocásticos.
+An additional database will be created where the set of data that a given **Thing** has collected will be stored, then it will be analyzed and this analysis will also be stored in order to compare, and to have a temporal follow-up of the results.
+The analysis will be done by means of specialized Python libraries, using methods such as Maximum Likelihood for the analysis of probabilities in stochastic processes.
